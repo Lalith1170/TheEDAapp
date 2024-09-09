@@ -1,19 +1,17 @@
 import numpy as np
 import pandas as pd
 import streamlit as st
-#from pandas_profiling import ProfileReport
 from ydata_profiling import ProfileReport
-from streamlit_pandas_profiling import st_profile_report
 
 # Web App Title
 st.markdown('''
 # **The EDA App**
 
-This is the **EDA App** created in Streamlit using the **pandas-profiling** library.
+This is the **EDA App** created in Streamlit using the **ydata-profiling** library.
 
-**Credit:** App built in `Python` + `Streamlit` by [Chanin Nantasenamat](https://medium.com/@chanin.nantasenamat) (aka [Data Professor](http://youtube.com/dataprofessor))
+**Credit:** App built in `Python` + `Streamlit` by [lalithxu](https://www.linkedin.com/in/lalith-adithya-u-47278920a/)
 
----
+Explore your data like never before and make informed decisions with the EDA App!
 ''')
 
 # Upload CSV data
@@ -31,11 +29,18 @@ if uploaded_file is not None:
         return csv
     df = load_csv()
     pr = ProfileReport(df, explorative=True)
+    pr.to_file("profile_report.html")
+
     st.header('**Input DataFrame**')
     st.write(df)
     st.write('---')
     st.header('**Pandas Profiling Report**')
-    st_profile_report(pr)
+
+    # Use Streamlit components to render the HTML file
+    with open("profile_report.html", "r") as f:
+        html_data = f.read()
+
+    st.components.v1.html(html_data, height=1000, scrolling=True)
 else:
     st.info('Awaiting for CSV file to be uploaded.')
     if st.button('Press to use Example Dataset'):
@@ -49,8 +54,15 @@ else:
             return a
         df = load_data()
         pr = ProfileReport(df, explorative=True)
+        pr.to_file("profile_report.html")
+
         st.header('**Input DataFrame**')
         st.write(df)
         st.write('---')
         st.header('**Pandas Profiling Report**')
-        st_profile_report(pr)
+
+        # Use Streamlit components to render the HTML file
+        with open("profile_report.html", "r") as f:
+            html_data = f.read()
+
+        st.components.v1.html(html_data, height=1000, scrolling=True)

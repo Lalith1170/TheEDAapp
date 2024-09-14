@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from ydata_profiling import ProfileReport
+from streamlit.components.v1 import html
 
 # Web App Title
 st.markdown('''
@@ -49,8 +50,10 @@ if uploaded_file is not None:
             profile_report = generate_profile_report(df)
             st.header('**Pandas Profiling Report**')
 
-            # Use streamlit's `st.components.v1.html` for displaying the report in the app
+            # Display the report directly in the app
             st.components.v1.html(profile_report.to_html(), height=1000, scrolling=True)
+    else:
+        st.error("The uploaded file could not be processed. Please check the file and try again.")
 else:
     st.info('Awaiting CSV file to be uploaded.')
     if st.button('Press to use Example Dataset'):
@@ -72,5 +75,5 @@ else:
             profile_report = generate_profile_report(df)
             st.header('**Pandas Profiling Report**')
 
-            # Use streamlit's `st.components.v1.html` for displaying the report in the app
+            # Display the report directly in the app
             st.components.v1.html(profile_report.to_html(), height=1000, scrolling=True)

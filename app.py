@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from ydata_profiling import ProfileReport
-from streamlit.components.v1 import html
 
 # Web App Title
 st.markdown('''
@@ -23,26 +22,24 @@ with st.sidebar.header('1. Upload your CSV data'):
     """)
 
 # Function to load CSV data
-@st.cache_resource
+@st.cache_data
 def load_csv(file):
     try:
         return pd.read_csv(file, encoding='utf-8')
-    except UnicodeDecodeError:
-        # Try another encoding if utf-8 fails
-        return pd.read_csv(file, encoding='ISO-8859-1')
+    except Exception as e:
+        st.error(f"Error reading the CSV file: {e}")
+        return None
 
 # Function to generate the profiling report
-@st.cache_resource
+@st.cache_data
 def generate_profile_report(data):
-    return ProfileReport(data, explorative=True, minimal=True, use_local_assets=True)
+    return ProfileReport(data, explorative=True, minimal=True)
 
 # Main section of the app
 if uploaded_file is not None:
-    try:
-        # Load the CSV data
-        df = load_csv(uploaded_file)
-        
-        # Display the DataFrame
+    df = load_csv(uploaded_file)
+
+    if df is not None:
         st.header('**Input DataFrame**')
         st.write(df)
         st.write('---')
@@ -52,35 +49,28 @@ if uploaded_file is not None:
             profile_report = generate_profile_report(df)
             st.header('**Pandas Profiling Report**')
 
-            # Display the profiling report directly in the app
-            report_html = profile_report.to_html()
-            html(report_html, height=1000, scrolling=True)
-    except Exception as e:
-        st.error(f"Error loading CSV file: {e}")
+            # Use streamlit's `st.components.v1.html` for displaying the report in the app
+            st.components.v1.html(profile_report.to_html(), height=1000, scrolling=True)
 else:
     st.info('Awaiting CSV file to be uploaded.')
     if st.button('Press to use Example Dataset'):
         # Example data
-        @st.cache_resource
+        @st.cache_data
         def load_example_data():
             return pd.DataFrame(
                 np.random.rand(100, 5),
                 columns=['a', 'b', 'c', 'd', 'e']
             )
 
-        # Load example dataset
         df = load_example_data()
 
-        # Display the example DataFrame
         st.header('**Example Input DataFrame**')
         st.write(df)
         st.write('---')
 
-        # Generate and display the profiling report for example dataset
         with st.spinner('Generating profiling report...'):
             profile_report = generate_profile_report(df)
             st.header('**Pandas Profiling Report**')
 
-            # Display the profiling report directly in the app
-            report_html = profile_report.to_html()
-            html(report_html, height=1000, scrolling=True)
+            # Use streamlit's `st.components.v1.html` for displaying the report in the app
+            st.components.v1.html(profile_report.to_html(), height=1000, scrolling=True)

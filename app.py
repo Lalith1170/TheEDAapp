@@ -1,57 +1,79 @@
 import numpy as np
 import pandas as pd
 import streamlit as st
-#from pandas_profiling import ProfileReport
 from ydata_profiling import ProfileReport
-from streamlit_pandas_profiling import st_profile_report
+from streamlit.components.v1 import html
 
 # Web App Title
 st.markdown('''
 # **The EDA App**
 
-This is the **EDA - Exploratory Data Analysis App** created in Streamlit using the **pandas-profiling** library.
+This is the **EDA App** created in Streamlit using the **ydata-profiling** library.
 
 **Credit:** App built in `Python` + `Streamlit` by [lalithxu](https://www.linkedin.com/in/lalith-adithya-u-47278920a/)
 
 Explore your data like never before and make informed decisions with the EDA App!
-
 ''')
 
 # Upload CSV data
 with st.sidebar.header('1. Upload your CSV data'):
     uploaded_file = st.sidebar.file_uploader("Upload your input CSV file", type=["csv"])
     st.sidebar.markdown("""
-[Example CSV input file](https://raw.githubusercontent.com/dataprofessor/data/master/delaney_solubility_with_descriptors.csv)
-""")
+    [Example CSV input file](https://raw.githubusercontent.com/dataprofessor/data/master/delaney_solubility_with_descriptors.csv)
+    """)
 
-# Pandas Profiling Report
+# Function to load CSV data
+@st.cache_data
+def load_csv(file):
+    try:
+        return pd.read_csv(file, encoding='utf-8')
+    except Exception as e:
+        st.error(f"Error reading the CSV file: {e}")
+        return None
+
+# Function to generate the profiling report
+@st.cache_data
+def generate_profile_report(data):
+    return ProfileReport(data, explorative=True, minimal=True)
+
+# Main section of the app
 if uploaded_file is not None:
-    @st.cache_data
-    def load_csv():
-        csv = pd.read_csv(uploaded_file)
-        return csv
-    df = load_csv()
-    pr = ProfileReport(df, explorative=True)
-    st.header('**Input DataFrame**')
-    st.write(df)
-    st.write('---')
-    st.header('**Pandas Profiling Report**')
-    st_profile_report(pr)
-else:
-    st.info('Awaiting for CSV file to be uploaded.')
-    if st.button('Press to use Example Dataset'):
-        # Example data
-        @st.cache_data
-        def load_data():
-            a = pd.DataFrame(
-                np.random.rand(100, 5),
-                columns=['a', 'b', 'c', 'd', 'e']
-            )
-            return a
-        df = load_data()
-        pr = ProfileReport(df, explorative=True)
+    df = load_csv(uploaded_file)
+
+    if df is not None:
         st.header('**Input DataFrame**')
         st.write(df)
         st.write('---')
-        st.header('**Pandas Profiling Report**')
-        st_profile_report(pr)
+
+        # Generate and display the profiling report
+        with st.spinner('Generating profiling report...'):
+            profile_report = generate_profile_report(df)
+            st.header('**Pandas Profiling Report**')
+
+            # Display the report directly in the app
+            st.components.v1.html(profile_report.to_html(), height=1000, scrolling=True)
+    else:
+        st.error("The uploaded file could not be processed. Please check the file and try again.")
+else:
+    st.info('Awaiting CSV file to be uploaded.')
+    if st.button('Press to use Example Dataset'):
+        # Example data
+        @st.cache_data
+        def load_example_data():
+            return pd.DataFrame(
+                np.random.rand(100, 5),
+                columns=['a', 'b', 'c', 'd', 'e']
+            )
+
+        df = load_example_data()
+
+        st.header('**Example Input DataFrame**')
+        st.write(df)
+        st.write('---')
+
+        with st.spinner('Generating profiling report...'):
+            profile_report = generate_profile_report(df)
+            st.header('**Pandas Profiling Report**')
+
+            # Display the report directly in the app
+            st.components.v1.html(profile_report.to_html(), height=1000, scrolling=True)

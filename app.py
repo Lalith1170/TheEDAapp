@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from ydata_profiling import ProfileReport
+from streamlit.components.v1 import html
 
 # Web App Title
 st.markdown('''
@@ -21,48 +22,57 @@ with st.sidebar.header('1. Upload your CSV data'):
 [Example CSV input file](https://raw.githubusercontent.com/dataprofessor/data/master/delaney_solubility_with_descriptors.csv)
 """)
 
+# Function to load CSV data
+@st.cache_resource
+def load_csv(file):
+    return pd.read_csv(file)
+
+# Function to generate the profiling report
+@st.cache_resource
+def generate_profile_report(data):
+    return ProfileReport(data, explorative=True, minimal=True)
+
 # Pandas Profiling Report
 if uploaded_file is not None:
-    @st.cache_data
-    def load_csv():
-        csv = pd.read_csv(uploaded_file)
-        return csv
-    df = load_csv()
-    pr = ProfileReport(df, explorative=True)
-    pr.to_file("profile_report.html")
+    try:
+        df = load_csv(uploaded_file)
+        
+        st.header('**Input DataFrame**')
+        st.write(df)
+        st.write('---')
 
-    st.header('**Input DataFrame**')
-    st.write(df)
-    st.write('---')
-    st.header('**Pandas Profiling Report**')
-
-    # Use Streamlit components to render the HTML file
-    with open("profile_report.html", "r") as f:
-        html_data = f.read()
-
-    st.components.v1.html(html_data, height=1000, scrolling=True)
+        # Generate the profiling report
+        with st.spinner('Generating profiling report...'):
+            profile_report = generate_profile_report(df)
+            st.header('**Pandas Profiling Report**')
+            
+            # Display the report directly in the app
+            report_html = profile_report.to_html()
+            html(report_html, height=1000, scrolling=True)
+    except Exception as e:
+        st.error(f"Error loading CSV file: {e}")
 else:
     st.info('Awaiting for CSV file to be uploaded.')
     if st.button('Press to use Example Dataset'):
         # Example data
-        @st.cache_data
+        @st.cache_resource
         def load_data():
-            a = pd.DataFrame(
+            return pd.DataFrame(
                 np.random.rand(100, 5),
                 columns=['a', 'b', 'c', 'd', 'e']
             )
-            return a
+        
         df = load_data()
-        pr = ProfileReport(df, explorative=True)
-        pr.to_file("profile_report.html")
 
         st.header('**Input DataFrame**')
         st.write(df)
         st.write('---')
-        st.header('**Pandas Profiling Report**')
 
-        # Use Streamlit components to render the HTML file
-        with open("profile_report.html", "r") as f:
-            html_data = f.read()
-
-        st.components.v1.html(html_data, height=1000, scrolling=True)
+        # Generate the profiling report
+        with st.spinner('Generating profiling report...'):
+            profile_report = generate_profile_report(df)
+            st.header('**Pandas Profiling Report**')
+            
+            # Display the report directly in the app
+            report_html = profile_report.to_html()
+            html(report_html, height=1000, scrolling=True)
